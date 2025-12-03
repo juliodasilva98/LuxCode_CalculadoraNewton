@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuxCalc - Calculadora de Viabilidade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#121212',
+                            card: '#1E1E1E',
+                            border: '#2A2A2A',
+                            text: '#E0E0E0',
+                            muted: '#888888'
+                        },
+                        gold: {
+                            DEFAULT: '#FFD700',
+                            dark: '#B8860B',
+                            light: '#FFE44D'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        .gradient-border {
+            background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
+            padding: 1px;
+            border-radius: 12px;
+        }
+        
+        .gradient-border-inner {
+            background: #1E1E1E;
+            border-radius: 11px;
+            height: 100%;
+        }
+        
+        .thermometer-bar {
+            background: linear-gradient(to right, 
+                #22C55E 0%, 
+                #22C55E 33%, 
+                #EAB308 33%, 
+                #EAB308 66%, 
+                #EF4444 66%, 
+                #EF4444 100%
+            );
+        }
+        
+        .tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .tooltip-trigger:hover .tooltip,
+        .tooltip-trigger:focus .tooltip,
+        .tooltip.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-only {
+                display: block !important;
+            }
+            
+            .dark-card {
+                background: white !important;
+                border: 1px solid #e5e7eb !important;
+                box-shadow: none !important;
+            }
+            
+            .dark-card * {
+                color: black !important;
+            }
+            
+            .thermometer-bar {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            
+            header {
+                background: white !important;
+                border-bottom: 2px solid #FFD700 !important;
+            }
+            
+            header * {
+                color: black !important;
+            }
+            
+            .gold-text {
+                color: #B8860B !important;
+            }
+        }
+        
+        .print-only {
+            display: none;
+        }
+        
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(255, 215, 0, 0); }
+        }
+        
+        .pulse-gold {
+            animation: pulse-gold 2s infinite;
+        }
+        
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-dark-bg min-h-screen text-dark-text">
+    <!-- Header -->
+    <header class="bg-dark-card border-b border-dark-border sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center">
+                        <svg class="w-6 h-6 text-dark-bg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">Lux<span class="text-gold">Calc</span></h1>
+                        <p class="text-xs text-dark-muted hidden sm:block">Calculadora de Viabilidade</p>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex items-center gap-3">
+                    <button onclick="openMathModal()" class="no-print flex items-center gap-2 px-3 py-2 text-sm text-dark-muted hover:text-gold transition-colors rounded-lg hover:bg-dark-border/30">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="hidden sm:inline">Entenda o Cálculo</span>
+                    </button>
+                    <button onclick="window.print()" class="no-print flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gold to-gold-dark text-dark-bg font-semibold rounded-lg hover:opacity-90 transition-opacity text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Gerar Relatório PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Left Column - Inputs -->
+            <div class="space-y-6 no-print">
+                
+                <!-- Card 1: Parâmetros Financeiros -->
+                <div class="dark-card bg-dark-card rounded-xl border border-dark-border p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">Parâmetros Financeiros</h2>
+                            <p class="text-sm text-dark-muted">Configure os valores do projeto</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-dark-text mb-2">Receita Total (R$)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-dark-muted">R$</span>
+                                <input type="number" id="receita" value="100000" class="w-full bg-dark-bg border border-dark-border rounded-lg pl-10 pr-4 py-3 text-white placeholder-dark-muted focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-dark-text mb-2">Custos Fixos (R$)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-dark-muted">R$</span>
+                                <input type="number" id="custosFixos" value="20000" class="w-full bg-dark-bg border border-dark-border rounded-lg pl-10 pr-4 py-3 text-white placeholder-dark-muted focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-dark-text mb-2">Margem de Lucro Desejada (%)</label>
+                            <div class="relative">
+                                <input type="number" id="margemLucro" value="15" class="w-full bg-dark-bg border border-dark-border rounded-lg pl-4 pr-10 py-3 text-white placeholder-dark-muted focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-dark-muted">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Equipe -->
+                <div class="dark-card bg-dark-card rounded-xl border border-dark-border p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">Equipe</h2>
+                            <p class="text-sm text-dark-muted">Adicione membros da equipe</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-dark-text mb-2">Cargo</label>
+                                <input type="text" id="cargo" placeholder="Ex: Desenvolvedor" class="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-3 text-white placeholder-dark-muted focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-dark-text mb-2">Valor Hora (R$)</label>
+                                <input type="number" id="valorHora" placeholder="150" class="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-3 text-white placeholder-dark-muted focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors">
+                            </div>
+                        </div>
+                        
+                        <button onclick="adicionarMembro()" class="w-full py-3 border-2 border-dashed border-dark-border rounded-lg text-dark-muted hover:border-gold hover:text-gold transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Adicionar Membro
+                        </button>
+                        
+                        <!-- Team List -->
+                        <div id="teamList" class="space-y-2 max-h-48 overflow-y-auto">
+                            <!-- Team members will be added here -->
+                        </div>
+                        
+                        <!-- Total -->
+                        <div class="flex items-center justify-between pt-4 border-t border-dark-border">
+                            <span class="text-dark-muted">Custo Hora Total:</span>
+                            <span id="custoHoraTotal" class="text-xl font-bold text-gold">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Configuração Avançada -->
+                <div class="dark-card bg-dark-card rounded-xl border border-dark-border p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">Configuração Avançada</h2>
+                            <p class="text-sm text-dark-muted">Ajustes de infraestrutura</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-dark-text mb-2">
+                            Coeficiente de Infraestrutura
+                            <span class="tooltip-trigger relative inline-block ml-1 cursor-help">
+                                <svg class="w-4 h-4 text-dark-muted inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-xs text-dark-text w-48 text-center">
+                                    Fator multiplicador para custos de infraestrutura baseado na raiz quadrada das horas
+                                </span>
+                            </span>
+                        </label>
+                        <input type="number" id="coeficiente" value="12" class="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-3 text-white placeholder-dark-muted focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors">
+                    </div>
+                </div>
+
+                <!-- Calculate Button -->
+                <button onclick="calcular()" class="w-full py-4 bg-gradient-to-r from-gold to-gold-dark text-dark-bg font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 pulse-gold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    Calcular Viabilidade
+                </button>
+            </div>
+
+            <!-- Right Column - Results -->
+            <div class="space-y-6">
+                
+                <!-- Print Header -->
+                <div class="print-only mb-6">
+                    <h1 class="text-2xl font-bold">Relatório de Viabilidade - LuxCalc</h1>
+                    <p class="text-gray-600">Gerado em: <span id="printDate"></span></p>
+                </div>
+
+                <!-- Card 1: Resultado Principal -->
+                <div class="gradient-border">
+                    <div class="gradient-border-inner dark-card p-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-white">Resultado Principal</h2>
+                                <p class="text-sm text-dark-muted">Horas máximas de trabalho</p>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center py-6">
+                            <div class="mb-2">
+                                <span class="text-6xl font-extrabold text-gold gold-text" id="maxHoras">0</span>
+                                <span class="text-2xl font-medium text-dark-muted ml-2">horas</span>
+                            </div>
+                            <p class="text-dark-muted">Máximo de Horas para Lucro Desejado</p>
+                        </div>
+                        
+                        <div class="bg-dark-bg rounded-lg p-4 mt-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-dark-muted">Ponto de Prejuízo (Zero Lucro):</span>
+                                <span class="text-xl font-semibold text-red-400" id="pontoPrejuizo">0 horas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Termômetro de Risco -->
+                <div class="dark-card bg-dark-card rounded-xl border border-dark-border p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">Termômetro de Risco</h2>
+                            <p class="text-sm text-dark-muted">Visualização do nível de risco</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="relative">
+                            <div class="thermometer-bar h-6 rounded-full overflow-hidden"></div>
+                            <div id="riskIndicator" class="absolute top-0 w-1 h-6 bg-white shadow-lg transition-all duration-500" style="left: 0%;">
+                                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-dark-bg border border-dark-border rounded px-2 py-1 text-xs whitespace-nowrap">
+                                    <span id="riskPercentage">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between text-sm">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                <span class="text-dark-muted">Lucro</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <span class="text-dark-muted">Risco</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <span class="text-dark-muted">Prejuízo</span>
+                            </div>
+                        </div>
+                        
+                        <div id="riskMessage" class="text-center py-3 rounded-lg bg-dark-bg">
+                            <span class="text-dark-muted">Aguardando cálculo...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Detalhamento Financeiro -->
+                <div class="dark-card bg-dark-card rounded-xl border border-dark-border p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">Detalhamento Financeiro</h2>
+                            <p class="text-sm text-dark-muted">Breakdown completo</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-dark-border">
+                                    <th class="text-left py-3 text-sm font-medium text-dark-muted">Descrição</th>
+                                    <th class="text-right py-3 text-sm font-medium text-dark-muted">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="financialTable">
+                                <tr class="border-b border-dark-border/50">
+                                    <td class="py-3 text-dark-text">Receita Total</td>
+                                    <td class="py-3 text-right text-green-400 font-medium" id="tblReceita">R$ 0,00</td>
+                                </tr>
+                                <tr class="border-b border-dark-border/50">
+                                    <td class="py-3 text-dark-text">(-) Custos Fixos</td>
+                                    <td class="py-3 text-right text-red-400 font-medium" id="tblCustosFixos">R$ 0,00</td>
+                                </tr>
+                                <tr class="border-b border-dark-border/50">
+                                    <td class="py-3 text-dark-text">(-) Custo de Equipe</td>
+                                    <td class="py-3 text-right text-red-400 font-medium" id="tblCustoEquipe">R$ 0,00</td>
+                                </tr>
+                                <tr class="border-b border-dark-border/50">
+                                    <td class="py-3 text-dark-text">(-) Custo Infraestrutura</td>
+                                    <td class="py-3 text-right text-red-400 font-medium" id="tblCustoInfra">R$ 0,00</td>
+                                </tr>
+                                <tr class="border-b border-dark-border/50">
+                                    <td class="py-3 text-dark-text">(-) Meta de Lucro</td>
+                                    <td class="py-3 text-right text-yellow-400 font-medium" id="tblMetaLucro">R$ 0,00</td>
+                                </tr>
+                                <tr class="bg-dark-bg/50">
+                                    <td class="py-4 text-white font-semibold">Lucro Líquido</td>
+                                    <td class="py-4 text-right text-gold font-bold text-lg" id="tblLucroLiquido">R$ 0,00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Math Explanation Modal -->
+    <div id="mathModal" class="fixed inset-0 bg-black/70 modal-overlay z-50 hidden items-center justify-center p-4">
+        <div class="bg-dark-card rounded-2xl border border-dark-border max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-dark-border flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Entenda o Cálculo</h3>
+                        <p class="text-sm text-dark-muted">Fórmula e metodologia</p>
+                    </div>
+                </div>
+                <button onclick="closeMathModal()" class="p-2 hover:bg-dark-border rounded-lg transition-colors">
+                    <svg class="w-5 h-5 text-dark-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div>
+                    <h4 class="text-gold font-semibold mb-3">📐 Fórmula do Lucro</h4>
+                    <div class="bg-dark-bg rounded-lg p-4 font-mono text-sm overflow-x-auto">
+                        <p class="text-green-400">L(x) = Receita - (CustosFixos + CustoHora × x + Coef × √x) - MetaLucro</p>
+                    </div>
+                    <p class="text-dark-muted text-sm mt-3">
+                        Onde <span class="text-gold font-semibold">x</span> representa o número de horas de trabalho.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="text-gold font-semibold mb-3">🔢 Variáveis</h4>
+                    <ul class="space-y-2 text-dark-text text-sm">
+                        <li class="flex items-start gap-2">
+                            <span class="text-gold">•</span>
+                            <span><strong>Receita:</strong> Valor total do projeto</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-gold">•</span>
+                            <span><strong>CustosFixos:</strong> Despesas fixas (aluguel, software, etc.)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-gold">•</span>
+                            <span><strong>CustoHora:</strong> Soma dos valores/hora da equipe</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-gold">•</span>
+                            <span><strong>Coef × √x:</strong> Custo de infraestrutura (cresce com a raiz quadrada)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-gold">•</span>
+                            <span><strong>MetaLucro:</strong> Percentual desejado sobre a receita</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-gold font-semibold mb-3">🧮 Método de Newton-Raphson</h4>
+                    <p class="text-dark-muted text-sm mb-3">
+                        Para encontrar o valor máximo de <span class="text-gold">x</span> (horas), utilizamos o 
+                        <strong class="text-white"> Método de Newton-Raphson</strong>, um algoritmo iterativo de 
+                        aproximação numérica:
+                    </p>
+                    <div class="bg-dark-bg rounded-lg p-4 font-mono text-sm">
+                        <p class="text-blue-400">x<sub>n+1</sub> = x<sub>n</sub> - f(x<sub>n</sub>) / f'(x<sub>n</sub>)</p>
+                    </div>
+                    <p class="text-dark-muted text-sm mt-3">
+                        O algoritmo converge rapidamente para a solução onde L(x) = 0, nos dando o número 
+                        máximo de horas para atingir o lucro desejado.
+                    </p>
+                </div>
+                
+                <div class="bg-gold/10 rounded-lg p-4 border border-gold/20">
+                    <p class="text-sm text-dark-text">
+                        <span class="text-gold font-semibold">💡 Dica:</span> O coeficiente de infraestrutura 
+                        modela custos que escalam de forma não-linear (servidores, energia, etc.), onde 
+                        o custo cresce mais lentamente conforme as horas aumentam.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Team members storage
+        let teamMembers = [];
+        
+        // Format currency
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+        
+        // Add team member
+        function adicionarMembro() {
+            const cargo = document.getElementById('cargo').value.trim();
+            const valorHora = parseFloat(document.getElementById('valorHora').value);
+            
+            if (!cargo || isNaN(valorHora) || valorHora <= 0) {
+                alert('Por favor, preencha o cargo e um valor hora válido.');
+                return;
+            }
+            
+            const member = {
+                id: Date.now(),
+                cargo: cargo,
+                valorHora: valorHora
+            };
+            
+            teamMembers.push(member);
+            renderTeamList();
+            updateTotalCost();
+            
+            // Clear inputs
+            document.getElementById('cargo').value = '';
+            document.getElementById('valorHora').value = '';
+        }
+        
+        // Remove team member
+        function removerMembro(id) {
+            teamMembers = teamMembers.filter(m => m.id !== id);
+            renderTeamList();
+            updateTotalCost();
+        }
+        
+        // Render team list
+        function renderTeamList() {
+            const container = document.getElementById('teamList');
+            
+            if (teamMembers.length === 0) {
+                container.innerHTML = '<p class="text-center text-dark-muted py-4 text-sm">Nenhum membro adicionado</p>';
+                return;
+            }
+            
+            container.innerHTML = teamMembers.map(member => `
+                <div class="flex items-center justify-between bg-dark-bg rounded-lg p-3">
+                    <div>
+                        <p class="text-white font-medium">${member.cargo}</p>
+                        <p class="text-sm text-gold">${formatCurrency(member.valorHora)}/hora</p>
+                    </div>
+                    <button onclick="removerMembro(${member.id})" class="p-2 text-dark-muted hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        // Update total cost
+        function updateTotalCost() {
+            const total = teamMembers.reduce((sum, m) => sum + m.valorHora, 0);
+            document.getElementById('custoHoraTotal').textContent = formatCurrency(total);
+        }
+        
+        // Newton-Raphson method to solve for x
+        function newtonRaphson(receita, custosFixos, custoHora, coef, meta, targetProfit = 0) {
+            // f(x) = Receita - CustosFixos - CustoHora*x - Coef*sqrt(x) - Meta - targetProfit = 0
+            // f'(x) = -CustoHora - Coef/(2*sqrt(x))
+            
+            let x = 100; // Initial guess
+            const maxIterations = 100;
+            const tolerance = 0.0001;
+            
+            for (let i = 0; i < maxIterations; i++) {
+                if (x <= 0) x = 0.1;
+                
+                const sqrtX = Math.sqrt(x);
+                const fx = receita - custosFixos - (custoHora * x) - (coef * sqrtX) - meta - targetProfit;
+                const fPrimeX = -custoHora - (coef / (2 * sqrtX));
+                
+                if (Math.abs(fPrimeX) < 0.0001) break;
+                
+                const xNew = x - (fx / fPrimeX);
+                
+                if (Math.abs(xNew - x) < tolerance) {
+                    return Math.max(0, xNew);
+                }
+                
+                x = xNew;
+            }
+            
+            return Math.max(0, x);
+        }
+        
+        // Calculate viability
+        function calcular() {
+            const receita = parseFloat(document.getElementById('receita').value) || 0;
+            const custosFixos = parseFloat(document.getElementById('custosFixos').value) || 0;
+            const margemLucro = parseFloat(document.getElementById('margemLucro').value) || 0;
+            const coef = parseFloat(document.getElementById('coeficiente').value) || 12;
+            
+            const custoHora = teamMembers.reduce((sum, m) => sum + m.valorHora, 0);
+            const metaLucro = receita * (margemLucro / 100);
+            
+            if (custoHora === 0) {
+                alert('Por favor, adicione pelo menos um membro à equipe.');
+                return;
+            }
+            
+            // Calculate max hours for desired profit
+            const maxHoras = newtonRaphson(receita, custosFixos, custoHora, coef, metaLucro);
+            
+            // Calculate break-even point (zero profit)
+            const pontoPrejuizo = newtonRaphson(receita, custosFixos, custoHora, coef, 0);
+            
+            // Update main result
+            document.getElementById('maxHoras').textContent = Math.round(maxHoras).toLocaleString('pt-BR');
+            document.getElementById('pontoPrejuizo').textContent = `${Math.round(pontoPrejuizo).toLocaleString('pt-BR')} horas`;
+            
+            // Calculate costs at max hours
+            const custoEquipe = custoHora * maxHoras;
+            const custoInfra = coef * Math.sqrt(maxHoras);
+            const lucroLiquido = receita - custosFixos - custoEquipe - custoInfra - metaLucro;
+            
+            // Update financial table
+            document.getElementById('tblReceita').textContent = formatCurrency(receita);
+            document.getElementById('tblCustosFixos').textContent = formatCurrency(custosFixos);
+            document.getElementById('tblCustoEquipe').textContent = formatCurrency(custoEquipe);
+            document.getElementById('tblCustoInfra').textContent = formatCurrency(custoInfra);
+            document.getElementById('tblMetaLucro').textContent = formatCurrency(metaLucro);
+            document.getElementById('tblLucroLiquido').textContent = formatCurrency(lucroLiquido);
+            
+            // Update risk thermometer
+            updateRiskThermometer(maxHoras, pontoPrejuizo);
+            
+            // Update print date
+            document.getElementById('printDate').textContent = new Date().toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Update risk thermometer
+        function updateRiskThermometer(maxHoras, pontoPrejuizo) {
+            const indicator = document.getElementById('riskIndicator');
+            const percentage = document.getElementById('riskPercentage');
+            const message = document.getElementById('riskMessage');
+            
+            // Calculate position based on ratio
+            let position = 0;
+            let riskLevel = '';
+            let riskColor = '';
+            
+            if (pontoPrejuizo > 0) {
+                const ratio = maxHoras / pontoPrejuizo;
+                
+                if (ratio >= 0.8) {
+                    position = Math.min(ratio * 33, 33);
+                    riskLevel = 'Baixo Risco - Margem Saudável';
+                    riskColor = 'bg-green-500/20 text-green-400';
+                } else if (ratio >= 0.5) {
+                    position = 33 + ((1 - ratio) * 66);
+                    riskLevel = 'Risco Moderado - Atenção';
+                    riskColor = 'bg-yellow-500/20 text-yellow-400';
+                } else {
+                    position = 66 + ((1 - ratio) * 34);
+                    riskLevel = 'Alto Risco - Margem Apertada';
+                    riskColor = 'bg-red-500/20 text-red-400';
+                }
+            }
+            
+            position = Math.min(Math.max(position, 0), 98);
+            
+            indicator.style.left = `${position}%`;
+            percentage.textContent = `${Math.round(position)}%`;
+            
+            message.className = `text-center py-3 rounded-lg ${riskColor}`;
+            message.innerHTML = `<span class="font-medium">${riskLevel}</span>`;
+        }
+        
+        // Modal functions
+        function openMathModal() {
+            document.getElementById('mathModal').classList.remove('hidden');
+            document.getElementById('mathModal').classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeMathModal() {
+            document.getElementById('mathModal').classList.add('hidden');
+            document.getElementById('mathModal').classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+        
+        // Close modal on outside click
+        document.getElementById('mathModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeMathModal();
+            }
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeMathModal();
+            }
+        });
+        
+        // Initialize
+        renderTeamList();
+    </script>
+</body>
+</html>
