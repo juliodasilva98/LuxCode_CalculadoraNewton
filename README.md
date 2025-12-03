@@ -1,1 +1,75 @@
-LuxCalc - Calculadora de Viabilidade de Projetos (Método de Newton)📋 Sobre o ProjetoO LuxCalc é uma Aplicação Web (Web App) desenvolvida como Produto Digital para a disciplina de Métodos Numéricos para Engenharia de Produção.O objetivo da ferramenta é resolver um problema real da empresa LuxCode: determinar o limite máximo de horas que uma equipe pode dedicar a um projeto de preço fixo antes que ele deixe de ser lucrativo. Devido à natureza não-linear dos custos de infraestrutura em nuvem, cálculos simples de regra de três não são suficientes.Este software implementa o Método de Newton-Raphson para encontrar as raízes da função de lucro não-linear, fornecendo aos gestores uma resposta exata e instantânea sobre a viabilidade econômica de novos contratos.🔗 Link de AcessoAcesse a ferramenta online (não requer instalação):👉 CLIQUE AQUI PARA ACESSAR O LUXCALC🧮 Metodologia MatemáticaA ferramenta utiliza o conteúdo da Unidade 1 (Zeros de Funções) para resolver o problema.A Função de LucroO lucro $L(x)$ em função das horas trabalhadas $x$ é modelado por:$$L(x) = R - (C_{fixo} + C_{hora} \cdot x + k \cdot \sqrt{x}) - Meta$$Onde:$R$: Receita Total do Projeto (Preço Fixo).$C_{fixo}$: Custos fixos (licenças, setup).$C_{hora}$: Custo da hora-homem da equipe (Soma dos salários/hora).$k \cdot \sqrt{x}$: Custo de infraestrutura (Não-Linear). O termo $\sqrt{x}$ modela a economia de escala em serviços de nuvem (AWS/Azure).$Meta$: Lucro mínimo desejado.O AlgoritmoComo isolar $x$ nesta equação é complexo, utilizamos o Método de Newton-Raphson para encontrar a raiz (o valor de $x$ onde $L(x) = 0$):$$x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}$$A aplicação roda este cálculo iterativamente no navegador do usuário até atingir uma precisão de $10^{-4}$.🚀 FuncionalidadesCálculo de Viabilidade: Determina o "Teto de Horas" para atingir a meta de lucro e o "Ponto de Prejuízo" (Break-even).Team Builder (Montador de Equipe): Permite adicionar múltiplos profissionais (Ex: Dev Senior, Dev Junior, Designer) com custos diferentes. O sistema calcula o custo médio ponderado automaticamente.Configuração Avançada: Permite ajustar o coeficiente de infraestrutura ($k$) para diferentes cenários de projeto.Termômetro de Risco: Visualização gráfica das zonas de segurança (Verde/Amarelo/Vermelho).Relatório PDF: Gera um documento limpo e formatado para impressão ou anexo em contratos.Responsividade: Funciona perfeitamente em celulares, tablets e desktops.🛠️ Tecnologias UtilizadasO projeto foi desenvolvido seguindo a premissa de "Plataformas Livres" e "Sem Instalação":HTML5 & JavaScript (Vanilla): Lógica matemática e estrutura rodando 100% no navegador (Client-Side).Tailwind CSS (CDN): Estilização moderna e responsiva com tema "Dark Mode" profissional.Hospedagem: GitHub Pages (Gratuito e Público).👨‍💻 AutorJúlio César da SilvaSócio e Desenvolvedor na LuxCodeDesenvolvido para a Universidade Federal do Rio Grande do Norte (UFRN).
+LuxCalc - Calculadora de Viabilidade de Projetos (Método de Newton)
+
+📋 Sobre o Projeto
+
+O LuxCalc é uma Aplicação Web (Web App) desenvolvida como Produto Digital para a disciplina de Métodos Numéricos para Engenharia de Produção.
+
+O objetivo da ferramenta é resolver um problema real da empresa LuxCode: determinar o limite máximo de horas que uma equipe pode dedicar a um projeto de preço fixo antes que ele deixe de ser lucrativo. Devido à natureza não-linear dos custos de infraestrutura em nuvem, cálculos simples de regra de três não são suficientes.
+
+Este software implementa o Método de Newton-Raphson para encontrar as raízes da função de lucro não-linear, fornecendo aos gestores uma resposta exata e instantânea sobre a viabilidade econômica de novos contratos.
+
+🔗 Link de Acesso
+
+Acesse a ferramenta online (não requer instalação):
+👉 CLIQUE AQUI PARA ACESSAR O LUXCALC
+
+🧮 Metodologia Matemática
+
+A ferramenta utiliza o conteúdo da Unidade 1 (Zeros de Funções) para resolver o problema.
+
+A Função de Lucro
+
+O lucro $L(x)$ em função das horas trabalhadas $x$ é modelado por:
+
+$$L(x) = R - (C_{fixo} + C_{hora} \cdot x + k \cdot \sqrt{x}) - Meta$$
+
+Onde:
+
+$R$: Receita Total do Projeto (Preço Fixo).
+
+$C_{fixo}$: Custos fixos (licenças, setup).
+
+$C_{hora}$: Custo da hora-homem da equipe (Soma dos salários/hora).
+
+$k \cdot \sqrt{x}$: Custo de infraestrutura (Não-Linear). O termo $\sqrt{x}$ modela a economia de escala em serviços de nuvem (AWS/Azure).
+
+$Meta$: Lucro mínimo desejado.
+
+O Algoritmo
+
+Como isolar $x$ nesta equação é complexo, utilizamos o Método de Newton-Raphson para encontrar a raiz (o valor de $x$ onde $L(x) = 0$):
+
+$$x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}$$
+
+A aplicação roda este cálculo iterativamente no navegador do usuário até atingir uma precisão de $10^{-4}$.
+
+🚀 Funcionalidades
+
+Cálculo de Viabilidade: Determina o "Teto de Horas" para atingir a meta de lucro e o "Ponto de Prejuízo" (Break-even).
+
+Team Builder (Montador de Equipe): Permite adicionar múltiplos profissionais (Ex: Dev Senior, Dev Junior, Designer) com custos diferentes. O sistema calcula o custo médio ponderado automaticamente.
+
+Configuração Avançada: Permite ajustar o coeficiente de infraestrutura ($k$) para diferentes cenários de projeto.
+
+Termômetro de Risco: Visualização gráfica das zonas de segurança (Verde/Amarelo/Vermelho).
+
+Relatório PDF: Gera um documento limpo e formatado para impressão ou anexo em contratos.
+
+Responsividade: Funciona perfeitamente em celulares, tablets e desktops.
+
+🛠️ Tecnologias Utilizadas
+
+O projeto foi desenvolvido seguindo a premissa de "Plataformas Livres" e "Sem Instalação":
+
+HTML5 & JavaScript (Vanilla): Lógica matemática e estrutura rodando 100% no navegador (Client-Side).
+
+Tailwind CSS (CDN): Estilização moderna e responsiva com tema "Dark Mode" profissional.
+
+Hospedagem: GitHub Pages (Gratuito e Público).
+
+👨‍💻 Autor
+
+Júlio César da Silva
+Sócio e Desenvolvedor na LuxCode
+
+Desenvolvido para a Universidade Federal do Rio Grande do Norte (UFRN)
